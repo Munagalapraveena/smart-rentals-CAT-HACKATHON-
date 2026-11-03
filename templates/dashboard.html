@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Rental Tracking System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<div class="hazard-bar" aria-hidden="true"></div>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">SRT</span>
+    <div class="brand-text">
+      <h1>Smart Rental Tracking</h1>
+      <p>Live fleet visibility for rented construction &amp; mining equipment</p>
+    </div>
+  </div>
+  <div class="topbar-stats" id="topbar-stats">
+    <div class="stat"><span class="stat-value" id="stat-total">–</span><span class="stat-label">Fleet</span></div>
+    <div class="stat"><span class="stat-value ok" id="stat-available">–</span><span class="stat-label">Available</span></div>
+    <div class="stat"><span class="stat-value warn" id="stat-rented">–</span><span class="stat-label">Rented</span></div>
+    <div class="stat"><span class="stat-value danger" id="stat-overdue">–</span><span class="stat-label">Overdue</span></div>
+    <div class="stat"><span class="stat-value flag" id="stat-anomalies">–</span><span class="stat-label">Flagged</span></div>
+  </div>
+  <button class="reseed-btn" id="reseed-btn" title="Regenerate simulated telemetry">↻ Resim</button>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button class="tab active" data-tab="board">Asset Board</button>
+  <button class="tab" data-tab="checkinout">Check-in / Check-out</button>
+  <button class="tab" data-tab="usage">Usage Logs</button>
+  <button class="tab" data-tab="alerts">Overdue Alerts</button>
+  <button class="tab" data-tab="forecast">Demand Forecast</button>
+  <button class="tab" data-tab="anomalies">Anomaly Detection</button>
+</nav>
+
+<main>
+
+  <!-- ASSET BOARD -->
+  <section class="panel active" id="panel-board">
+    <div class="panel-head">
+      <h2>Live Asset Status</h2>
+      <div class="filters">
+        <select id="filter-site"><option value="">All sites</option></select>
+        <select id="filter-status">
+          <option value="">All statuses</option>
+          <option value="available">Available</option>
+          <option value="rented">Rented</option>
+          <option value="overdue">Overdue</option>
+        </select>
+      </div>
+    </div>
+    <div class="board-grid" id="board-grid"></div>
+  </section>
+
+  <!-- CHECK-IN / CHECK-OUT -->
+  <section class="panel" id="panel-checkinout">
+    <div class="panel-head"><h2>QR / RFID Check-in &amp; Check-out Simulation</h2></div>
+    <div class="scan-console">
+      <div class="scan-card">
+        <label for="scan-select">Scan asset tag</label>
+        <select id="scan-select"></select>
+        <div id="scan-current" class="scan-current"></div>
+
+        <div id="checkout-fields" class="scan-fields">
+          <label for="operator-id">Operator ID</label>
+          <input id="operator-id" type="text" placeholder="e.g. OP-482">
+          <label for="rental-days">Rental duration (days)</label>
+          <input id="rental-days" type="number" value="7" min="1" max="60">
+        </div>
+
+        <button id="scan-action-btn" class="action-btn">Check out</button>
+        <p class="scan-message" id="scan-message"></p>
+      </div>
+      <div class="scan-log">
+        <h3>Recent transactions</h3>
+        <ul id="scan-log-list"></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- USAGE LOGS -->
+  <section class="panel" id="panel-usage">
+    <div class="panel-head">
+      <h2>Runtime, Fuel &amp; Idle Time — per site</h2>
+      <select id="usage-site-filter"><option value="">All sites</option></select>
+    </div>
+    <div class="chart-wrap"><canvas id="usage-chart"></canvas></div>
+    <table class="data-table" id="usage-table">
+      <thead><tr><th>Date</th><th>Asset</th><th>Type</th><th>Site</th><th>Engine hrs</th><th>Idle hrs</th><th>Fuel (L)</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <!-- OVERDUE ALERTS -->
+  <section class="panel" id="panel-alerts">
+    <div class="panel-head"><h2>Overdue Equipment</h2></div>
+    <div class="alert-list" id="alert-list"></div>
+  </section>
+
+  <!-- DEMAND FORECAST -->
+  <section class="panel" id="panel-forecast">
+    <div class="panel-head">
+      <h2>Predicted Demand — Next Period</h2>
+      <span class="model-tag">Random Forest Regressor</span>
+    </div>
+    <p class="panel-sub">Aggregated by site, equipment type &amp; week — trained on site, type, season, past utilization rate &amp; operating-day trend.</p>
+    <div class="chart-wrap"><canvas id="forecast-chart"></canvas></div>
+    <div class="forecast-cards" id="forecast-cards"></div>
+  </section>
+
+  <!-- ANOMALY DETECTION -->
+  <section class="panel" id="panel-anomalies">
+    <div class="panel-head">
+      <h2>Flagged Assets</h2>
+      <span class="model-tag">Isolation Forest + Rule-based Layer</span>
+    </div>
+    <p class="panel-sub">Long idle hours, unassigned equipment, and unusual idle/engine-hour ratios are surfaced here automatically.</p>
+    <div class="anomaly-list" id="anomaly-list"></div>
+  </section>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+
+</body>
+</html>
